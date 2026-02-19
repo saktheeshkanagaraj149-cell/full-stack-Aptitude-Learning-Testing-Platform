@@ -5,7 +5,7 @@ import GlassCard from '../components/GlassCard';
 import QuestionPalette from '../components/QuestionPalette';
 import Calculator from '../components/Calculator';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://aptiq-backend-production-5740.up.railway.app';
 
 export default function TestTaking() {
     const { id } = useParams();

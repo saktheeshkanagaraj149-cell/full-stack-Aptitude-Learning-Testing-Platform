@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://aptiq-backend-production-5740.up.railway.app';
+const API = `${BACKEND_URL}/api`;
 
 // Safely parse JSON — returns {} if response is empty, throws if HTML (CORS/404 etc)
 async function safeJson(res) {
