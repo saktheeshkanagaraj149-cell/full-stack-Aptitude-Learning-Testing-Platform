@@ -4,17 +4,22 @@ const AuthContext = createContext(null);
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
-// Safely parse JSON — returns null if response is empty or not JSON (e.g. HTML error pages)
+// Safely parse JSON — returns {} if response is empty, throws if HTML (CORS/404 etc)
 async function safeJson(res) {
     const text = await res.text();
     if (!text || !text.trim()) return {};
     try {
         return JSON.parse(text);
     } catch {
-        console.error('Non-JSON response from server:', text.slice(0, 200));
-        throw new Error('Server returned an unexpected response. The backend may be starting up — please try again in a moment.');
+        // Server returned HTML — usually means wrong URL or CORS block
+        const hint = !res.url.includes('railway') && !res.url.includes('localhost')
+            ? 'VITE_API_URL may not be set in Vercel env vars.'
+            : 'Check Railway logs for errors.';
+        console.error(`[AptIQ] Non-JSON response (status ${res.status}) from ${res.url}\n${hint}\nBody preview: ${text.slice(0, 300)}`);
+        throw new Error(`Server error (${res.status}). ${hint} Check browser console for details.`);
     }
 }
+
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
