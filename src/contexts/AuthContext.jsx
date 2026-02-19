@@ -4,6 +4,17 @@ const AuthContext = createContext(null);
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
+// Safely parse JSON — returns null if response is empty or not JSON (e.g. HTML error pages)
+async function safeJson(res) {
+    const text = await res.text();
+    if (!text || !text.trim()) return {};
+    try {
+        return JSON.parse(text);
+    } catch {
+        console.error('Non-JSON response from server:', text.slice(0, 200));
+        throw new Error('Server returned an unexpected response. The backend may be starting up — please try again in a moment.');
+    }
+}
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -24,7 +35,7 @@ export function AuthProvider({ children }) {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
-                const data = await res.json();
+                const data = await safeJson(res);
                 setUser(data);
             } else {
                 logout();
@@ -42,8 +53,8 @@ export function AuthProvider({ children }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await safeJson(res);
+        if (!res.ok) throw new Error(data.error || 'Login failed. Backend may be waking up — try again.');
         localStorage.setItem('aptiq_token', data.token);
         setToken(data.token);
         setUser(data.user);
@@ -56,8 +67,8 @@ export function AuthProvider({ children }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await safeJson(res);
+        if (!res.ok) throw new Error(data.error || 'Registration failed. Backend may be waking up — try again.');
         localStorage.setItem('aptiq_token', data.token);
         setToken(data.token);
         setUser(data.user);
@@ -79,8 +90,8 @@ export function AuthProvider({ children }) {
                 ...options.headers,
             },
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Request failed');
+        const data = await safeJson(res);
+        if (!res.ok) throw new Error(data.error || 'Request failed. Backend may be waking up — try again.');
         return data;
     };
 
